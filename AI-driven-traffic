@@ -1,0 +1,59 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, accuracy_score
+
+# Sample traffic accident dataset
+data = {
+    'Date': ['2024-05-01', '2024-05-01', '2024-05-02', '2024-05-02'],
+    'Time': ['08:30', '18:45', '12:15', '22:30'],
+    'Location': ['Junction A', 'Junction B', 'Junction A', 'Junction C'],
+    'Weather': ['Clear', 'Rainy', 'Cloudy', 'Clear'],
+    'Traffic_Volume': [500, 750, 600, 300],
+    'Accident': [0, 1, 0, 1]
+}
+
+df = pd.DataFrame(data)
+
+# Convert time to hour only for analysis
+df['Hour'] = pd.to_datetime(df['Time']).dt.hour
+
+# Encode categorical variables
+df_encoded = pd.get_dummies(df, columns=['Location', 'Weather'], drop_first=True)
+
+# Define features and target
+X = df_encoded.drop(['Date', 'Time', 'Accident'], axis=1)
+y = df_encoded['Accident']
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Train Random Forest classifier
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Predict on test set
+y_pred = model.predict(X_test)
+
+# Evaluate model
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+print("\nAccuracy Score:", accuracy_score(y_test, y_pred))
+
+# Example: Predict accident probability for a new situation
+new_data = pd.DataFrame({
+    'Traffic_Volume': [700],
+    'Hour': [19],
+    'Location_Junction B': [1],
+    'Location_Junction C': [0],
+    'Weather_Clear': [0],
+    'Weather_Cloudy': [0],
+    'Weather_Rainy': [1]
+})
+
+prediction = model.predict(new_data)
+probability = model.predict_proba(new_data)
+
+print("\nAccident Predicted:", prediction[0])
+print("Accident Probability:", probability[0][1])
